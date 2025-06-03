@@ -1,1 +1,28 @@
+name: Azure Cost Fetch
 
+on:
+  schedule:
+    - cron: '0 1 * * *'  # Runs daily at 1 AM UTC
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    env:
+      TENANT_ID: ${{ secrets.TENANT_ID }}
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - run: pip install requests
+      - run: python fetch_costs.py
+      - run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add azure_costs.csv
+          git commit -m "Update cost data"
+          git push
